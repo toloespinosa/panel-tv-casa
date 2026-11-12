@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0F2E31">
+<title>Panel TV · Casa</title>
+<style>
+  :root {
+    --noche: #081315; --mar: #0F2E31; --jade: #2F8F7B; --jade-2: #3BA58E; --arena: #E9DCC3;
+    --bg: #F6F2EA; --card: #FFFFFF; --ink: #142224; --ink-2: #5B6B69; --line: #E3DCCD;
+    --peligro: #B4453A; --ok: #2F8F7B;
+    --r: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--ink);
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+  header {
+    background: linear-gradient(135deg, var(--mar), var(--noche));
+    color: #F5F1EA; padding: 22px 16px 26px;
+  }
+  header .wrap { display: flex; align-items: center; gap: 12px; }
+  header h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: .2px; }
+  header p { margin: 2px 0 0; color: #B4C2BF; font-size: 13px; }
+  .logo { width: 40px; height: 40px; border-radius: 12px; background: var(--jade); display: grid; place-items: center; font-size: 22px; flex: none; }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  main { padding: 0 16px; margin-top: -12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; margin-bottom: 14px; }
+  .card h2 { margin: 0 0 4px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .card .sub { margin: 0 0 14px; color: var(--ink-2); font-size: 13px; }
+  .grid { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+  .grid .full { grid-column: 1 / -1; }
+  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--ink-2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .4px; }
+  input, textarea, select {
+    width: 100%; font: inherit; color: var(--ink); background: #FBF9F5;
+    border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; outline: none;
+  }
+  textarea { min-height: 72px; resize: vertical; }
+  input:focus, textarea:focus, select:focus { border-color: var(--jade); box-shadow: 0 0 0 3px rgba(47,143,123,.15); background: #fff; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  button {
+    font: inherit; font-weight: 600; border: 1px solid var(--line); background: #fff; color: var(--ink);
+    border-radius: 10px; padding: 9px 14px; cursor: pointer;
+  }
+  button:hover { border-color: var(--jade); }
+  button.prim { background: var(--jade); color: #fff; border-color: var(--jade); }
+  button.prim:hover { background: var(--jade-2); }
+  button.mini { padding: 5px 10px; font-size: 13px; font-weight: 500; }
+  button.peligro { color: var(--peligro); }
+  button:disabled { opacity: .5; cursor: default; }
+  .sec { border: 1px solid var(--line); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+  .sec > summary { list-style: none; cursor: pointer; padding: 12px 14px; display: flex; gap: 10px; align-items: center; background: #FBF9F5; }
+  .sec > summary::-webkit-details-marker { display: none; }
+  .sec > summary .ic { font-size: 20px; width: 28px; text-align: center; }
+  .sec > summary .t { font-weight: 600; flex: 1; min-width: 0; }
+  .sec > summary .t small { display: block; font-weight: 400; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sec[open] > summary { border-bottom: 1px solid var(--line); }
+  .sec .body { padding: 14px; }
+  .bloque { border-left: 3px solid var(--arena); padding: 10px 0 10px 12px; margin: 10px 0; }
+  .bloque .row { justify-content: flex-end; margin-top: 6px; }
+  .hint { font-size: 12px; color: var(--ink-2); margin-top: 4px; }
+  .preview-bg { margin-top: 8px; border-radius: 10px; aspect-ratio: 16/9; background: var(--mar) center/cover no-repeat; display: none; }
+  .barra {
+    position: fixed; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,.96); backdrop-filter: blur(8px);
+    border-top: 1px solid var(--line); padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  }
+  .barra .wrap { display: flex; align-items: center; gap: 12px; }
+  .estado { flex: 1; font-size: 13px; color: var(--ink-2); min-width: 0; }
+  .estado b { color: var(--ink); }
+  .estado.sucio b { color: #A36A00; }
+  .estado.error b { color: var(--peligro); }
+  .login { max-width: 520px; margin: 24px auto; }
+  .login ol { padding-left: 20px; margin: 8px 0 14px; }
+  .login li { margin-bottom: 6px; }
+  a { color: var(--jade); }
+  .chip { display: inline-block; font-size: 12px; background: #EEF6F3; color: var(--jade); border-radius: 999px; padding: 2px 10px; font-weight: 600; }
+  .oculto { display: none !important; }
+  .pass { position: relative; }
+  .pass button { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); }
+  .pass input { padding-right: 70px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="logo">🌊</div>
+    <div>
+      <h1 id="titulo">Panel de la TV</h1>
+      <p id="subtitulo">Lo que guardes aquí aparece en la TV en máximo 15 minutos.</p>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- Activar dispositivo -->
+  <section id="vLogin" class="card login oculto">
+    <h2>🔑 Activar este dispositivo</h2>
+    <p class="sub">Se hace una sola vez por celular o computador. La llave queda guardada solo en este navegador.</p>
+    <ol>
+      <li>Abre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">crear llave en GitHub</a>.</li>
+      <li>Nombre: <i>Panel TV</i>. Expiración: la que prefieras.</li>
+      <li>En <b>Permissions › Account permissions › Gists</b> elige <b>Read and write</b>. Nada más.</li>
+      <li>Genera la llave, cópiala y pégala aquí:</li>
+    </ol>
+    <label for="token">Llave de GitHub</label>
+    <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
+    <div class="row" style="margin-top:12px">
+      <button class="prim" id="btnEntrar">Activar</button>
+      <span class="hint" id="loginMsg"></span>
+    </div>
+  </section>
+
+  <!-- Editor -->
+  <div id="vEditor" class="oculto">
+    <section class="card">
+      <h2>🧳 Huésped actual</h2>
+      <p class="sub">Cámbialo en cada reserva. El día de salida, pasada la hora de check-out, la TV borra las sesiones de streaming.</p>
+      <div class="grid">
+        <div><label>Nombre</label><input data-p="huesped.nombre" placeholder="Familia Pérez"></div>
+        <div><label>Día de salida</label><input type="date" data-p="huesped.salida"></div>
+        <div class="full"><label>Mensaje de bienvenida</label><textarea data-p="huesped.mensaje" rows="2"></textarea></div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="mini" id="btnSinHuesped">Sin huésped (casa libre)</button>
+        <span class="hint">Deja el nombre y la salida en blanco.</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>📶 WiFi</h2>
+      <p class="sub">La TV genera el código QR para que el huésped se conecte con la cámara.</p>
+      <div class="grid">
+        <div><label>Red</label><input data-p="wifi.red"></div>
+        <div><label>Clave</label><div class="pass"><input type="password" data-p="wifi.clave" id="wifiClave"><button class="mini" type="button" id="verClave">Ver</button></div></div>
+        <div><label>Seguridad</label>
+          <select data-p="wifi.seguridad"><option value="WPA">WPA / WPA2 / WPA3</option><option value="WEP">WEP</option><option value="nopass">Sin clave</option></select>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>🏠 Casa</h2>
+      <div class="grid">
+        <div><label>Nombre</label><input data-p="casa.nombre"></div>
+        <div><label>Hora de check-out</label><input type="time" data-p="casa.checkout"></div>
+        <div class="full"><label>Dirección</label><input data-p="casa.direccion"></div>
+        <div class="full">
+          <label>Foto de fondo (link a imagen horizontal)</label>
+          <input data-p="casa.fondo" placeholder="https://…/casa.jpg" id="fondo">
+          <div class="hint">Vacío = mar dibujado. Ideal 1920×1080.</div>
+          <div class="preview-bg" id="fondoPrev"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>📋 Secciones de “La casa”</h2>
+      <p class="sub">Cada sección es una tarjeta en la TV. Los ítems con link muestran un QR para abrirlo en el celular (Google Maps, WhatsApp…).</p>
+      <div id="secciones"></div>
+      <button id="btnAddSec">+ Agregar sección</button>
+    </section>
+
+    <section class="card">
+      <h2>⚙️ Avanzado</h2>
+      <div class="grid">
+        <div><label>Latitud (clima)</label><input data-p="casa.lat" data-num></div>
+        <div><label>Longitud (clima)</label><input data-p="casa.lon" data-num></div>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <button class="mini" id="btnSalir">Desactivar este dispositivo</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="barra oculto" id="barra">
+  <div class="wrap">
+    <div class="estado" id="estado"><b>Cargando…</b></div>
+    <button class="prim" id="btnGuardar" disabled>Guardar</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const API = 'https://api.github.com';
+  const ARCHIVO = 'casa.json';
+  const LS_TOKEN = 'ctv_token', LS_GIST = 'ctv_gist';
+  const DEMO = location.hash === '#demo';
+
+  const $ = (s) => document.querySelector(s);
+  const store = {
+    get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+    del: (k) => { try { localStorage.removeItem(k); } catch {} },
+  };
+
+  let token = store.get(LS_TOKEN);
+  let gistId = store.get(LS_GIST);
+  let data = null;
+  let sucio = false;
+  let abiertas = new Set();
+
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  // ---------- GitHub ----------
+  async function gh(path, opts = {}) {
+    const headers = {
+      Authorization: 'Bearer ' + token,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    };
+    if (opts.body) headers['Content-Type'] = 'application/json';
+    const r = await fetch(API + path, { ...opts, headers });
+    if (!r.ok) {
+      const e = new Error(r.status === 401 ? 'Llave inválida o vencida' : r.status === 403 || r.status === 404 ? 'La llave no tiene permiso de Gists (Read and write)' : 'GitHub respondió ' + r.status);
+      e.status = r.status; throw e;
+    }
+    return r.status === 204 ? null : r.json();
+  }
+
+  async function buscarGist() {
+    for (let page = 1; page <= 10; page++) {
+      const lista = await gh(`/gists?per_page=100&page=${page}`);
+      const g = lista.find((g) => g.files && g.files[ARCHIVO]);
+      if (g) return g.id;
+      if (lista.length < 100) break;
+    }
+    throw new Error(`No encontré un Gist con ${ARCHIVO} en tu cuenta`);
+  }
+
+  async function cargar() {
+    if (DEMO) {
+      data = ejemplo();
+      return { updated_at: null };
+    }
+    if (!gistId) { gistId = await buscarGist(); store.set(LS_GIST, gistId); }
+    let g;
+    try { g = await gh('/gists/' + gistId); }
+    catch (e) {
+      if (e.status === 404) { store.del(LS_GIST); gistId = await buscarGist(); store.set(LS_GIST, gistId); g = await gh('/gists/' + gistId); }
+      else throw e;
+    }
+    const f = g.files[ARCHIVO];
+    const txt = f.truncated ? await (await fetch(f.raw_url)).text() : f.content;
+    data = JSON.parse(txt);
+    return g;
+  }
+
+  async function guardar() {
+    const btn = $('#btnGuardar');
+    btn.disabled = true;
+    estado('Guardando…');
+    try {
+      limpiarDatos();
+      if (DEMO) { await new Promise((r) => setTimeout(r, 400)); }
+      else {
+        await gh('/gists/' + gistId, {
+          method: 'PATCH',
+          body: JSON.stringify({ files: { [ARCHIVO]: { content: JSON.stringify(data, null, 2) + '\n' } } }),
+        });
+      }
+      sucio = false;
+      estado('Guardado ✓', `${hora()} · la TV lo toma en ≤ 15 min`);
+    } catch (e) {
+      estado('No se pudo guardar', e.message, 'error');
+      btn.disabled = false;
+    }
+  }
+
+  // ---------- Datos ----------
+  function normalizar() {
+    data.casa ??= {}; data.huesped ??= {}; data.wifi ??= {}; data.secciones ??= [];
+    data.casa.checkout ??= '11:00';
+    data.wifi.seguridad ??= 'WPA';
+    data.secciones.forEach((s) => { s.bloques ??= []; });
+  }
+
+  function limpiarDatos() {
+    // Ids únicos y sin campos vacíos de más.
+    const usados = new Set();
+    data.secciones.forEach((s, i) => {
+      let id = (s.id || s.titulo || 'seccion').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'seccion';
+      while (usados.has(id) || id === 'wifi') id += '-' + (i + 1);
+      usados.add(id); s.id = id;
+      s.bloques = s.bloques.filter((b) => (b.titulo || b.texto || b.link || '').trim());
+    });
+  }
+
+  function setPath(obj, path, val) {
+    const ks = path.split('.');
+    let o = obj;
+    for (let i = 0; i < ks.length - 1; i++) o = o[ks[i]] ??= {};
+    o[ks.at(-1)] = val;
+  }
+  function getPath(obj, path) {
+    return path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
+  }
+
+  // ---------- UI ----------
+  function estado(titulo, detalle = '', tipo = '') {
+    const el = $('#estado');
+    el.className = 'estado ' + tipo;
+    el.innerHTML = `<b>${esc(titulo)}</b>${detalle ? '<br>' + esc(detalle) : ''}`;
+  }
+  const hora = () => new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+
+  function marcarSucio() {
+    if (!sucio) { sucio = true; }
+    estado('Cambios sin guardar', 'Presiona Guardar para enviarlos a la TV', 'sucio');
+    $('#btnGuardar').disabled = false;
+  }
+
+  function pintarCampos() {
+    document.querySelectorAll('#vEditor [data-p]').forEach((el) => {
+      if (el.closest('#secciones')) return;
+      const v = getPath(data, el.dataset.p);
+      el.value = v ?? '';
+    });
+    $('#titulo').textContent = 'Panel TV · ' + (data.casa.nombre || 'Casa');
+    previewFondo();
+  }
+
+  function previewFondo() {
+    const url = (data.casa.fondo || '').trim();
+    const p = $('#fondoPrev');
+    if (/^https?:\/\//.test(url)) { p.style.display = 'block'; p.style.backgroundImage = `url("${url.replace(/"/g, '%22')}")`; }
+    else { p.style.display = 'none'; }
+  }
+
+  function pintarSecciones() {
+    const cont = $('#secciones');
+    cont.innerHTML = data.secciones.map((s, i) => `
+      <details class="sec" data-i="${i}" ${abiertas.has(i) ? 'open' : ''}>
+        <summary>
+          <span class="ic">${esc(s.icono || '•')}</span>
+          <span class="t">${esc(s.titulo || 'Sin título')}<small>${esc(s.resumen || '')}</small></span>
+          <span class="chip">${s.bloques.length}</span>
+        </summary>
+        <div class="body">
+          <div class="grid">
+            <div><label>Título</label><input data-sp="${i}.titulo" value="${esc(s.titulo)}"></div>
+            <div><label>Ícono (emoji)</label><input data-sp="${i}.icono" value="${esc(s.icono)}" maxlength="4"></div>
+            <div class="full"><label>Resumen (debajo del título en la TV)</label><input data-sp="${i}.resumen" value="${esc(s.resumen)}"></div>
+            <div class="full"><label>Foto (opcional, link)</label><input data-sp="${i}.imagen" value="${esc(s.imagen)}" placeholder="https://…"></div>
+          </div>
+          ${s.bloques.map((b, j) => `
+            <div class="bloque">
+              <div class="grid">
+                <div class="full"><label>Título</label><input data-bp="${i}.${j}.titulo" value="${esc(b.titulo)}"></div>
+                <div class="full"><label>Texto</label><textarea data-bp="${i}.${j}.texto" rows="3">${esc(b.texto)}</textarea></div>
+                <div class="full"><label>Link para QR (opcional)</label><input data-bp="${i}.${j}.link" value="${esc(b.link)}" placeholder="https://maps.google.com/… o https://wa.me/569…"></div>
+              </div>
+              <div class="row">
+                <button class="mini" data-acc="bUp" data-i="${i}" data-j="${j}" ${j === 0 ? 'disabled' : ''}>↑</button>
+                <button class="mini" data-acc="bDown" data-i="${i}" data-j="${j}" ${j === s.bloques.length - 1 ? 'disabled' : ''}>↓</button>
+                <button class="mini peligro" data-acc="bDel" data-i="${i}" data-j="${j}">Quitar ítem</button>
+              </div>
+            </div>`).join('')}
+          <div class="row" style="margin-top:10px">
+            <button class="mini" data-acc="bAdd" data-i="${i}">+ Agregar ítem</button>
+            <span style="flex:1"></span>
+            <button class="mini" data-acc="sUp" data-i="${i}" ${i === 0 ? 'disabled' : ''}>Subir</button>
+            <button class="mini" data-acc="sDown" data-i="${i}" ${i === data.secciones.length - 1 ? 'disabled' : ''}>Bajar</button>
+            <button class="mini peligro" data-acc="sDel" data-i="${i}">Eliminar sección</button>
+          </div>
+        </div>
+      </details>`).join('');
+  }
+
+  function mover(arr, i, d) { const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; }
+
+  function conectarEventos() {
+    $('#vEditor').addEventListener('input', (e) => {
+      const el = e.target;
+      if (el.dataset.p) {
+        let v = el.value;
+        if ('num' in el.dataset) { const n = parseFloat(v.replace(',', '.')); v = isNaN(n) ? v : n; }
+        setPath(data, el.dataset.p, v);
+        if (el.dataset.p === 'casa.fondo') previewFondo();
+        if (el.dataset.p === 'casa.nombre') $('#titulo').textContent = 'Panel TV · ' + (v || 'Casa');
+      } else if (el.dataset.sp) {
+        const [i, k] = el.dataset.sp.split('.');
+        data.secciones[+i][k] = el.value;
+        const sum = el.closest('.sec').querySelector('summary');
+        if (k === 'titulo') sum.querySelector('.t').firstChild.textContent = el.value || 'Sin título';
+        if (k === 'resumen') sum.querySelector('.t small').textContent = el.value;
+        if (k === 'icono') sum.querySelector('.ic').textContent = el.value || '•';
+      } else if (el.dataset.bp) {
+        const [i, j, k] = el.dataset.bp.split('.');
+        data.secciones[+i].bloques[+j][k] = el.value;
+      } else return;
+      marcarSucio();
+    });
+    $('#vEditor').addEventListener('change', (e) => { if (e.target.tagName === 'SELECT') e.target.dispatchEvent(new Event('input', { bubbles: true })); });
+
+    $('#secciones').addEventListener('toggle', (e) => {
+      const i = +e.target.dataset.i;
+      e.target.open ? abiertas.add(i) : abiertas.delete(i);
+    }, true);
+
+    $('#secciones').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-acc]');
+      if (!b) return;
+      e.preventDefault();
+      const i = +b.dataset.i, j = +b.dataset.j, secs = data.secciones;
+      switch (b.dataset.acc) {
+        case 'bAdd': secs[i].bloques.push({ titulo: '', texto: '', link: '' }); break;
+        case 'bDel': if (!confirm('¿Quitar este ítem?')) return; secs[i].bloques.splice(j, 1); break;
+        case 'bUp': mover(secs[i].bloques, j, -1); break;
+        case 'bDown': mover(secs[i].bloques, j, 1); break;
+        case 'sUp': mover(secs, i, -1); abiertas = new Set([i - 1]); break;
+        case 'sDown': mover(secs, i, 1); abiertas = new Set([i + 1]); break;
+        case 'sDel': if (!confirm(`¿Eliminar la sección "${secs[i].titulo}"?`)) return; secs.splice(i, 1); abiertas = new Set(); break;
+      }
+      pintarSecciones(); marcarSucio();
+    });
+
+    $('#btnAddSec').onclick = () => {
+      data.secciones.push({ id: '', titulo: 'Nueva sección', icono: '⭐', resumen: '', imagen: '', bloques: [{ titulo: '', texto: '', link: '' }] });
+      abiertas = new Set([data.secciones.length - 1]);
+      pintarSecciones(); marcarSucio();
+    };
+    $('#btnSinHuesped').onclick = () => {
+      data.huesped.nombre = ''; data.huesped.salida = '';
+      pintarCampos(); marcarSucio();
+    };
+    $('#verClave').onclick = () => {
+      const c = $('#wifiClave'); const ver = c.type === 'password';
+      c.type = ver ? 'text' : 'password'; $('#verClave').textContent = ver ? 'Ocultar' : 'Ver';
+    };
+    $('#btnGuardar').onclick = guardar;
+    $('#btnSalir').onclick = () => {
+      if (!confirm('¿Desactivar este dispositivo? Tendrás que pegar la llave de nuevo.')) return;
+      store.del(LS_TOKEN); store.del(LS_GIST); location.reload();
+    };
+    window.addEventListener('beforeunload', (e) => { if (sucio) { e.preventDefault(); e.returnValue = ''; } });
+    document.addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); if (sucio) guardar(); } });
+  }
+
+  // ---------- Arranque ----------
+  async function abrirEditor() {
+    $('#vLogin').classList.add('oculto');
+    $('#vEditor').classList.remove('oculto');
+    $('#barra').classList.remove('oculto');
+    estado('Cargando…');
+    try {
+      const g = await cargar();
+      normalizar(); pintarCampos(); pintarSecciones();
+      const cuando = g.updated_at ? new Date(g.updated_at).toLocaleString('es-CL', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+      estado(DEMO ? 'Modo demo (no guarda)' : 'Al día', cuando ? 'Último cambio: ' + cuando : '');
+    } catch (e) {
+      if (e.status === 401) { store.del(LS_TOKEN); mostrarLogin(e.message); return; }
+      estado('No se pudo cargar', e.message, 'error');
+    }
+  }
+
+  function mostrarLogin(msg = '') {
+    $('#vEditor').classList.add('oculto');
+    $('#barra').classList.add('oculto');
+    $('#vLogin').classList.remove('oculto');
+    $('#loginMsg').textContent = msg;
+  }
+
+  $('#btnEntrar').onclick = async () => {
+    const t = $('#token').value.trim();
+    if (!t) return;
+    $('#btnEntrar').disabled = true;
+    $('#loginMsg').textContent = 'Verificando…';
+    token = t;
+    try {
+      gistId = await buscarGist();
+      store.set(LS_TOKEN, t); store.set(LS_GIST, gistId);
+      $('#token').value = '';
+      abrirEditor();
+    } catch (e) {
+      token = null;
+      $('#loginMsg').textContent = e.message;
+    } finally {
+      $('#btnEntrar').disabled = false;
+    }
+  };
+
+  function ejemplo() {
+    return {
+      casa: { nombre: 'Casa de ejemplo', direccion: 'Calle 123', fondo: '', lat: -33.45, lon: -70.66, checkout: '11:00' },
+      huesped: { nombre: 'Familia Demo', salida: '', mensaje: 'Bienvenidos.' },
+      wifi: { red: 'MiWifi', clave: 'clave-demo', seguridad: 'WPA' },
+      secciones: [
+        { id: 'llegada', titulo: 'Llegada y salida', icono: '🔑', resumen: 'Check-out 11:00', imagen: '',
+          bloques: [{ titulo: 'Check-in', texto: 'Desde las 15:00', link: '' }, { titulo: 'Check-out', texto: 'Hasta las 11:00', link: '' }] },
+        { id: 'contacto', titulo: 'Contacto', icono: '📞', resumen: 'Anfitrión', imagen: '',
+          bloques: [{ titulo: 'WhatsApp', texto: 'Escríbenos', link: 'https://wa.me/56900000000' }] },
+      ],
+    };
+  }
+
+  conectarEventos();
+  if (DEMO || token) abrirEditor(); else mostrarLogin();
+})();
+</script>
+</body>
+</html>
