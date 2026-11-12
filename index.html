@@ -174,10 +174,11 @@
 
     <section class="card">
       <h2>🧭 Descubre: lugares recomendados</h2>
-      <p class="sub">Aparecen en la TV por categoría, con fotos, distancia desde la casa y un QR para llegar.</p>
+      <p class="sub">En la TV se ordenan del más cercano al más lejano (según la ubicación de la casa en Avanzado). En Comida, el “Tipo” arma las subpestañas. Sin fotos, la TV muestra un ícono del tipo.</p>
       <div class="row" id="catsPanel" style="margin-bottom:12px"></div>
       <div id="lugares"></div>
       <button id="btnAddLugar">+ Agregar lugar en esta categoría</button>
+      <datalist id="tipos"><option>Pescados y mariscos</option><option>Chilena</option><option>Empanadas</option><option>Sushi</option><option>Asiática</option><option>Pizza</option><option>Italiana</option><option>Peruana</option><option>Parrilla</option><option>Hamburguesas</option><option>Sándwiches</option><option>Café y dulces</option><option>Helados</option><option>Comida rápida</option><option>Bar</option><option>Restaurante</option></datalist>
       <datalist id="ciudades"><option>Concón</option><option>Viña del Mar</option><option>Valparaíso</option></datalist>
     </section>
 
@@ -519,6 +520,10 @@
             <div><label>Ciudad</label><input data-lp="${i}.ciudad" value="${esc(l.ciudad)}" list="ciudades"></div>
             <div><label>Categoría</label><select data-lp="${i}.categoria">${data.categorias.map((c) => `<option value="${esc(c.id)}" ${c.id === l.categoria ? 'selected' : ''}>${esc(c.nombre)}</option>`).join('')}</select></div>
             <div><label>Resumen</label><input data-lp="${i}.resumen" value="${esc(l.resumen)}"></div>
+            <div><label>Tipo (p. ej. Pescados y mariscos)</label><input data-lp="${i}.tipo" value="${esc(l.tipo || '')}" list="tipos"></div>
+            <div><label>Teléfono</label><input data-lp="${i}.telefono" value="${esc(l.telefono || '')}"></div>
+            <div class="full"><label>Dirección</label><input data-lp="${i}.direccion" value="${esc(l.direccion || '')}"></div>
+            <div class="full"><label>Horario</label><input data-lp="${i}.horario" value="${esc(l.horario || '')}" placeholder="Lu-Do 12:00-23:00"></div>
             <div class="full"><label>Descripción</label><textarea data-lp="${i}.descripcion" rows="3">${esc(l.descripcion)}</textarea></div>
             <div class="full"><label>Consejos (uno por línea)</label><textarea data-lt="${i}" rows="2">${esc(l.tips.join('\n'))}</textarea></div>
             <div><label>Latitud</label><input data-lp="${i}.lat" value="${esc(l.lat ?? '')}" placeholder="-32.95"></div>
