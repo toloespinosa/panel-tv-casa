@@ -65,6 +65,12 @@
   .bloque { border-left: 3px solid var(--arena); padding: 10px 0 10px 12px; margin: 10px 0; }
   .bloque .row { justify-content: flex-end; margin-top: 6px; }
   .hint { font-size: 12px; color: var(--ink-2); margin-top: 4px; }
+  .thumb { width: 64px; height: 40px; border-radius: 8px; background: #E9E3D6 center/cover no-repeat; flex: none; }
+  .thumb.grande { width: 112px; height: 63px; }
+  .foto { display: flex; gap: 10px; align-items: center; margin: 10px 0; }
+  .foto .campos { flex: 1; display: grid; gap: 6px; min-width: 0; }
+  .foto .acc { display: flex; flex-direction: column; gap: 4px; }
+  #catsPanel { gap: 6px; }
   .preview-bg { margin-top: 8px; border-radius: 10px; aspect-ratio: 16/9; background: var(--mar) center/cover no-repeat; display: none; }
   .barra {
     position: fixed; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,.96); backdrop-filter: blur(8px);
@@ -167,11 +173,28 @@
     </section>
 
     <section class="card">
+      <h2>🧭 Descubre: lugares recomendados</h2>
+      <p class="sub">Aparecen en la TV por categoría, con fotos, distancia desde la casa y un QR para llegar.</p>
+      <div class="row" id="catsPanel" style="margin-bottom:12px"></div>
+      <div id="lugares"></div>
+      <button id="btnAddLugar">+ Agregar lugar en esta categoría</button>
+      <datalist id="ciudades"><option>Concón</option><option>Viña del Mar</option><option>Valparaíso</option></datalist>
+    </section>
+
+    <section class="card">
+      <h2>🖼️ Fondos y protector de pantalla</h2>
+      <p class="sub">Fotos horizontales que rotan de fondo en el inicio y en el protector de pantalla. El dato aparece en el protector.</p>
+      <div id="fondos"></div>
+      <button id="btnAddFondo">+ Agregar fondo</button>
+    </section>
+
+    <section class="card">
       <h2>⚙️ Avanzado</h2>
       <div class="grid">
-        <div><label>Latitud (clima)</label><input data-p="casa.lat" data-num></div>
-        <div><label>Longitud (clima)</label><input data-p="casa.lon" data-num></div>
+        <div><label>Latitud de la casa</label><input data-p="casa.lat" data-num></div>
+        <div><label>Longitud de la casa</label><input data-p="casa.lon" data-num></div>
       </div>
+      <div class="hint">Para el clima y las distancias a los lugares. En Google Maps: clic derecho sobre la casa y copia las coordenadas.</div>
       <div class="row" style="margin-top:14px">
         <button class="mini" id="btnSalir">Desactivar este dispositivo</button>
       </div>
@@ -282,6 +305,7 @@
   }
 
   function limpiarDatos() {
+    limpiarExtra();
     // Ids únicos y sin campos vacíos de más.
     const usados = new Set();
     data.secciones.forEach((s, i) => {
@@ -443,6 +467,161 @@
     document.addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); if (sucio) guardar(); } });
   }
 
+
+  // ---------- Lugares (Descubre) y fondos ----------
+  const CATS_DEF = [{ id: 'playas', nombre: 'Playas' }, { id: 'comida', nombre: 'Comida' },
+    { id: 'panoramas', nombre: 'Panoramas' }, { id: 'naturaleza', nombre: 'Naturaleza y miradores' }];
+  let catPanel = null;
+  let lugarAbierto = null;
+  const slug = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'lugar';
+  const bg = (u) => `background-image:url("${esc(String(u || '').replace(/"/g, '%22'))}")`;
+
+  function normalizarExtra() {
+    if (!Array.isArray(data.categorias) || !data.categorias.length) data.categorias = CATS_DEF;
+    data.lugares ??= []; data.fondos ??= [];
+    data.lugares.forEach((l) => { l.fotos ??= []; l.tips ??= []; });
+    if (!catPanel || !data.categorias.some((c) => c.id === catPanel)) catPanel = data.categorias[0].id;
+  }
+
+  function limpiarExtra() {
+    normalizarExtra();
+    const usados = new Set();
+    data.lugares.forEach((l, i) => {
+      let id = slug(l.id || l.nombre);
+      while (usados.has(id)) id += '-' + (i + 1);
+      usados.add(id); l.id = id;
+      l.fotos = l.fotos.filter((f) => (f.url || '').trim());
+      l.tips = l.tips.map((t) => t.trim()).filter(Boolean);
+      for (const k of ['lat', 'lon']) {
+        const n = parseFloat(String(l[k] ?? '').replace(',', '.'));
+        if (isNaN(n)) delete l[k]; else l[k] = n;
+      }
+    });
+    data.fondos = data.fondos.filter((f) => (f.url || '').trim());
+  }
+
+  function pintarLugares() {
+    normalizarExtra();
+    $('#catsPanel').innerHTML = data.categorias.map((c) =>
+      `<button class="mini ${c.id === catPanel ? 'prim' : ''}" data-cat="${esc(c.id)}">${esc(c.nombre)} · ${data.lugares.filter((l) => l.categoria === c.id).length}</button>`).join('');
+    const lista = data.lugares.map((l, i) => [l, i]).filter(([l]) => l.categoria === catPanel);
+    $('#lugares').innerHTML = lista.map(([l, i], k) => `
+      <details class="sec" data-li="${i}" ${lugarAbierto === i ? 'open' : ''}>
+        <summary>
+          <span class="thumb" style='${bg((l.fotos[0] || {}).url)}'></span>
+          <span class="t">${esc(l.nombre || 'Sin nombre')}<small>${esc(l.ciudad || '')} · ${esc(l.resumen || '')}</small></span>
+          <span class="chip">${l.fotos.length} fotos</span>
+        </summary>
+        <div class="body">
+          <div class="grid">
+            <div><label>Nombre</label><input data-lp="${i}.nombre" value="${esc(l.nombre)}"></div>
+            <div><label>Ciudad</label><input data-lp="${i}.ciudad" value="${esc(l.ciudad)}" list="ciudades"></div>
+            <div><label>Categoría</label><select data-lp="${i}.categoria">${data.categorias.map((c) => `<option value="${esc(c.id)}" ${c.id === l.categoria ? 'selected' : ''}>${esc(c.nombre)}</option>`).join('')}</select></div>
+            <div><label>Resumen</label><input data-lp="${i}.resumen" value="${esc(l.resumen)}"></div>
+            <div class="full"><label>Descripción</label><textarea data-lp="${i}.descripcion" rows="3">${esc(l.descripcion)}</textarea></div>
+            <div class="full"><label>Consejos (uno por línea)</label><textarea data-lt="${i}" rows="2">${esc(l.tips.join('\n'))}</textarea></div>
+            <div><label>Latitud</label><input data-lp="${i}.lat" value="${esc(l.lat ?? '')}" placeholder="-32.95"></div>
+            <div><label>Longitud</label><input data-lp="${i}.lon" value="${esc(l.lon ?? '')}" placeholder="-71.54"></div>
+            <div class="full"><label>Link del QR “Cómo llegar” (opcional)</label><input data-lp="${i}.link" value="${esc(l.link)}" placeholder="Vacío = búsqueda en Google Maps por nombre"></div>
+          </div>
+          <label style="margin-top:14px">Fotos (la primera es la portada)</label>
+          ${l.fotos.map((f, j) => `
+            <div class="foto">
+              <span class="thumb" style='${bg(f.url)}'></span>
+              <div class="campos">
+                <input data-lf="${i}.${j}.url" value="${esc(f.url)}" placeholder="https://…jpg">
+                <input data-lf="${i}.${j}.credito" value="${esc(f.credito)}" placeholder="Crédito: autor · licencia">
+              </div>
+              <div class="acc">
+                <button class="mini" data-acc="fUp" data-i="${i}" data-j="${j}" ${j === 0 ? 'disabled' : ''} aria-label="Subir foto">↑</button>
+                <button class="mini peligro" data-acc="fDel" data-i="${i}" data-j="${j}" aria-label="Quitar foto">✕</button>
+              </div>
+            </div>`).join('')}
+          <div class="row" style="margin-top:10px">
+            <button class="mini" data-acc="fAdd" data-i="${i}">+ Agregar foto</button>
+            <span style="flex:1"></span>
+            <button class="mini" data-acc="lUp" data-i="${i}" ${k === 0 ? 'disabled' : ''}>Subir</button>
+            <button class="mini peligro" data-acc="lDel" data-i="${i}">Eliminar lugar</button>
+          </div>
+        </div>
+      </details>`).join('') || '<p class="hint">No hay lugares en esta categoría.</p>';
+  }
+
+  function pintarFondos() {
+    normalizarExtra();
+    $('#fondos').innerHTML = data.fondos.map((f, i) => `
+      <div class="foto">
+        <span class="thumb grande" style='${bg(f.url)}'></span>
+        <div class="campos">
+          <input data-fp="${i}.url" value="${esc(f.url)}" placeholder="https://…jpg (horizontal)">
+          <input data-fp="${i}.lugar" value="${esc(f.lugar)}" placeholder="Lugar (se muestra en la TV)">
+          <input data-fp="${i}.dato" value="${esc(f.dato)}" placeholder="Dato para el protector (opcional)">
+          <input data-fp="${i}.credito" value="${esc(f.credito)}" placeholder="Crédito de la foto">
+        </div>
+        <div class="acc">
+          <button class="mini" data-acc="gUp" data-i="${i}" ${i === 0 ? 'disabled' : ''} aria-label="Subir fondo">↑</button>
+          <button class="mini peligro" data-acc="gDel" data-i="${i}" aria-label="Quitar fondo">✕</button>
+        </div>
+      </div>`).join('') || '<p class="hint">Sin fondos: la TV muestra el mar dibujado.</p>';
+  }
+
+  function conectarExtra() {
+    $('#vEditor').addEventListener('input', (e) => {
+      const el = e.target, d = el.dataset;
+      if (d.lp) {
+        const [i, k] = d.lp.split('.'); const l = data.lugares[+i];
+        l[k] = el.value;
+        if (k === 'categoria') { catPanel = el.value; lugarAbierto = +i; pintarLugares(); }
+        else if (['nombre', 'resumen', 'ciudad'].includes(k)) {
+          const t = el.closest('.sec').querySelector('summary .t');
+          t.firstChild.textContent = l.nombre || 'Sin nombre';
+          t.querySelector('small').textContent = `${l.ciudad || ''} · ${l.resumen || ''}`;
+        }
+      } else if (d.lt) {
+        data.lugares[+d.lt].tips = el.value.split('\n');
+      } else if (d.lf) {
+        const [i, j, k] = d.lf.split('.'); data.lugares[+i].fotos[+j][k] = el.value;
+        if (k === 'url') el.closest('.foto').querySelector('.thumb').style.backgroundImage = `url("${el.value.replace(/"/g, '%22')}")`;
+      } else if (d.fp) {
+        const [i, k] = d.fp.split('.'); data.fondos[+i][k] = el.value;
+        if (k === 'url') el.closest('.foto').querySelector('.thumb').style.backgroundImage = `url("${el.value.replace(/"/g, '%22')}")`;
+      } else return;
+      marcarSucio();
+    });
+    $('#lugares').addEventListener('toggle', (e) => {
+      const i = +e.target.dataset.li;
+      if (e.target.open) lugarAbierto = i; else if (lugarAbierto === i) lugarAbierto = null;
+    }, true);
+    $('#catsPanel').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-cat]'); if (!b) return;
+      catPanel = b.dataset.cat; lugarAbierto = null; pintarLugares();
+    });
+    const acciones = (e) => {
+      const b = e.target.closest('button[data-acc]'); if (!b) return;
+      e.preventDefault();
+      const i = +b.dataset.i, j = +b.dataset.j, L = data.lugares, F = data.fondos;
+      switch (b.dataset.acc) {
+        case 'fAdd': L[i].fotos.push({ url: '', credito: '' }); lugarAbierto = i; break;
+        case 'fDel': L[i].fotos.splice(j, 1); break;
+        case 'fUp': mover(L[i].fotos, j, -1); break;
+        case 'lDel': if (!confirm(`¿Eliminar "${L[i].nombre}"?`)) return; L.splice(i, 1); lugarAbierto = null; break;
+        case 'lUp': { let p = i - 1; while (p >= 0 && L[p].categoria !== L[i].categoria) p--; if (p >= 0) { [L[p], L[i]] = [L[i], L[p]]; lugarAbierto = p; } break; }
+        case 'gDel': F.splice(i, 1); break;
+        case 'gUp': mover(F, i, -1); break;
+        default: return;
+      }
+      pintarLugares(); pintarFondos(); marcarSucio();
+    };
+    $('#lugares').addEventListener('click', acciones);
+    $('#fondos').addEventListener('click', acciones);
+    $('#btnAddLugar').onclick = () => {
+      data.lugares.push({ id: '', nombre: 'Nuevo lugar', categoria: catPanel, ciudad: 'Concón', resumen: '', descripcion: '', tips: [], fotos: [{ url: '', credito: '' }], link: '' });
+      lugarAbierto = data.lugares.length - 1; pintarLugares(); marcarSucio();
+    };
+    $('#btnAddFondo').onclick = () => { data.fondos.push({ url: '', lugar: '', credito: '', dato: '' }); pintarFondos(); marcarSucio(); };
+  }
+
   // ---------- Arranque ----------
   async function abrirEditor() {
     $('#vLogin').classList.add('oculto');
@@ -451,7 +630,7 @@
     estado('Cargando…');
     try {
       const g = await cargar();
-      normalizar(); pintarCampos(); pintarSecciones();
+      normalizar(); pintarCampos(); pintarSecciones(); pintarLugares(); pintarFondos();
       const cuando = g.updated_at ? new Date(g.updated_at).toLocaleString('es-CL', { dateStyle: 'medium', timeStyle: 'short' }) : '';
       estado(DEMO ? 'Modo demo (no guarda)' : 'Al día', cuando ? 'Último cambio: ' + cuando : '');
     } catch (e) {
@@ -491,6 +670,12 @@
       casa: { nombre: 'Casa de ejemplo', direccion: 'Calle 123', fondo: '', lat: -33.45, lon: -70.66, checkout: '11:00' },
       huesped: { nombre: 'Familia Demo', salida: '', mensaje: 'Bienvenidos.' },
       wifi: { red: 'MiWifi', clave: 'clave-demo', seguridad: 'WPA' },
+      lugares: [
+        { id: 'demo-1', nombre: 'Lugar de ejemplo', categoria: 'playas', ciudad: 'Concón', resumen: 'Playa tranquila',
+          descripcion: 'Descripción de ejemplo.', tips: ['Ideal al atardecer'], lat: -32.93, lon: -71.53,
+          fotos: [{ url: '', credito: '' }], link: '' },
+      ],
+      fondos: [{ url: '', lugar: 'Concón', credito: '', dato: 'Dato de ejemplo' }],
       secciones: [
         { id: 'llegada', titulo: 'Llegada y salida', icono: '🔑', resumen: 'Check-out 11:00', imagen: '',
           bloques: [{ titulo: 'Check-in', texto: 'Desde las 15:00', link: '' }, { titulo: 'Check-out', texto: 'Hasta las 11:00', link: '' }] },
@@ -501,6 +686,7 @@
   }
 
   conectarEventos();
+  conectarExtra();
   if (DEMO || token) abrirEditor(); else mostrarLogin();
 })();
 </script>
