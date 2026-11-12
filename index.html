@@ -174,7 +174,7 @@
 
     <section class="card">
       <h2>🧭 Descubre: lugares recomendados</h2>
-      <p class="sub">En la TV se ordenan del más cercano al más lejano (según la ubicación de la casa en Avanzado). En Comida, el “Tipo” arma las subpestañas. Sin fotos, la TV muestra un ícono del tipo.</p>
+      <p class="sub">En la TV se ordenan del más cercano al más lejano (según la ubicación de la casa en Avanzado). En Comida, el “Tipo” arma las subpestañas. Los locales sin fotos propias muestran fotos referenciales de su tipo de comida (o fotos reales de Google Maps si pones la clave en Avanzado).</p>
       <div class="row" id="catsPanel" style="margin-bottom:12px"></div>
       <div id="lugares"></div>
       <button id="btnAddLugar">+ Agregar lugar en esta categoría</button>
@@ -196,6 +196,10 @@
         <div><label>Longitud de la casa</label><input data-p="casa.lon" data-num></div>
       </div>
       <div class="hint">Para el clima y las distancias a los lugares. En Google Maps: clic derecho sobre la casa y copia las coordenadas.</div>
+      <div class="grid" style="margin-top:14px">
+        <div class="full"><label>Clave de Google Maps (opcional)</label><div class="pass"><input type="password" data-p="google.clave" id="googleClave" autocomplete="off" placeholder="AIza…"><button class="mini" type="button" id="verGoogle">Ver</button></div></div>
+      </div>
+      <div class="hint">Con una clave, la TV muestra en Comida fotos reales de cada local (de Google Maps) y su fachada en Street View. Sin clave, muestra fotos referenciales del tipo de comida. Actívale “Places API (New)” y “Street View Static API”, y restríngela a la app Android <code>cl.casaconcon.tv</code>.</div>
       <div class="row" style="margin-top:14px">
         <button class="mini" id="btnSalir">Desactivar este dispositivo</button>
       </div>
@@ -454,6 +458,10 @@
     $('#btnSinHuesped').onclick = () => {
       data.huesped.nombre = ''; data.huesped.salida = '';
       pintarCampos(); marcarSucio();
+    };
+    $('#verGoogle').onclick = () => {
+      const c = $('#googleClave'), ver = c.type === 'password';
+      c.type = ver ? 'text' : 'password'; $('#verGoogle').textContent = ver ? 'Ocultar' : 'Ver';
     };
     $('#verClave').onclick = () => {
       const c = $('#wifiClave'); const ver = c.type === 'password';
