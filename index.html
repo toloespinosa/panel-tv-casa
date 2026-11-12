@@ -531,6 +531,8 @@
             <div><label>Tipo (p. ej. Pescados y mariscos)</label><input data-lp="${i}.tipo" value="${esc(l.tipo || '')}" list="tipos"></div>
             <div><label>Teléfono</label><input data-lp="${i}.telefono" value="${esc(l.telefono || '')}"></div>
             <div class="full"><label>Dirección</label><input data-lp="${i}.direccion" value="${esc(l.direccion || '')}"></div>
+            <div><label>Enlace al menú / carta</label><input data-lp="${i}.menu" value="${esc(l.menu || '')}" placeholder="https://… (web o PDF)"></div>
+            <div><label>Sitio web o Instagram</label><input data-lp="${i}.web" value="${esc(l.web || '')}" placeholder="https://…"></div>
             <div class="full"><label>Horario</label><input data-lp="${i}.horario" value="${esc(l.horario || '')}" placeholder="Lu-Do 12:00-23:00"></div>
             <div class="full"><label>Descripción</label><textarea data-lp="${i}.descripcion" rows="3">${esc(l.descripcion)}</textarea></div>
             <div class="full"><label>Consejos (uno por línea)</label><textarea data-lt="${i}" rows="2">${esc(l.tips.join('\n'))}</textarea></div>
